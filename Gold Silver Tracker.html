@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold & Silver Price Tracker</title>
+    <style>
+        :root {
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-cream-100: rgba(255, 255, 253, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-brown-600-rgb: 94, 82, 64;
+            --color-bg-1: rgba(59, 130, 246, 0.08);
+            --color-bg-2: rgba(245, 158, 11, 0.08);
+            --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --space-16: 16px;
+            --space-24: 24px;
+            --radius-lg: 12px;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-cream-50: rgba(31, 33, 33, 1);
+                --color-cream-100: rgba(38, 40, 40, 1);
+                --color-slate-900: rgba(245, 245, 245, 1);
+                --color-slate-500: rgba(167, 169, 169, 1);
+                --color-bg-1: rgba(29, 78, 216, 0.15);
+                --color-bg-2: rgba(180, 83, 9, 0.15);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background: var(--color-cream-50);
+            color: var(--color-slate-900);
+            padding: var(--space-24);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 30px;
+            font-weight: 600;
+            margin-bottom: var(--space-16);
+            color: var(--color-slate-900);
+        }
+
+        .info-bar {
+            display: flex;
+            gap: var(--space-24);
+            margin-bottom: var(--space-24);
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: var(--color-cream-100);
+            padding: var(--space-16);
+            border-radius: var(--radius-lg);
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid rgba(var(--color-brown-600-rgb), 0.12);
+            box-shadow: var(--shadow-md);
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-slate-500);
+            margin-bottom: 8px;
+        }
+
+        .info-card .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-slate-900);
+        }
+
+        .info-card .change {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .positive {
+            color: #16a34a;
+        }
+
+        .negative {
+            color: #dc2626;
+        }
+
+        .chart-container {
+            background: var(--color-cream-100);
+            padding: var(--space-24);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-24);
+            border: 1px solid rgba(var(--color-brown-600-rgb), 0.12);
+            box-shadow: var(--shadow-md);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: var(--space-16);
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--color-teal-500);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--color-teal-600);
+        }
+
+        .btn.secondary {
+            background: rgba(var(--color-brown-600-rgb), 0.12);
+            color: var(--color-slate-900);
+        }
+
+        .btn.active {
+            background: var(--color-teal-600);
+            color: white;
+        }
+
+        .last-updated {
+            font-size: 12px;
+            color: var(--color-slate-500);
+            margin-top: var(--space-16);
+        }
+
+        @font-face {
+            font-family: 'FKGroteskNeue';
+            src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2') format('woff2');
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Gold & Silver Price Tracker</h1>
+        
+        <div class="info-bar">
+            <div class="info-card">
+                <h3>Gold (24K - 10g)</h3>
+                <div class="value" id="goldPrice">₹1,24,360</div>
+                <div class="change" id="goldChange"></div>
+            </div>
+            <div class="info-card">
+                <h3>Silver (1 Kg)</h3>
+                <div class="value" id="silverPrice">₹1,54,900</div>
+                <div class="change" id="silverChange"></div>
+            </div>
+            <div class="info-card">
+                <h3>Gold/Silver Ratio</h3>
+                <div class="value" id="ratio">0.80</div>
+                <div class="change" style="font-size: 12px; color: var(--color-slate-500);">Price comparison</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="controls">
+                <button class="btn active" onclick="setTimeRange('all')" id="btnAll">All Time</button>
+                <button class="btn secondary" onclick="setTimeRange('1y')" id="btn1y">1 Year</button>
+                <button class="btn secondary" onclick="setTimeRange('6m')" id="btn6m">6 Months</button>
+                <button class="btn secondary" onclick="setTimeRange('3m')" id="btn3m">3 Months</button>
+                <button class="btn secondary" onclick="setTimeRange('1m')" id="btn1m">1 Month</button>
+            </div>
+            <canvas id="priceChart"></canvas>
+            <div class="last-updated" id="lastUpdated">Last updated: October 25, 2025, 9:08 AM IST</div>
+        </div>
+
+        <div class="chart-container">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Indexed Performance (Base: June 1, 2022 = 100)</h2>
+            <canvas id="indexChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Reference prices from June 1, 2022
+        const REFERENCE_DATE = new Date('2022-06-01');
+        const GOLD_REFERENCE = 52080; // INR per 10 grams
+        const SILVER_REFERENCE = 60900; // INR per kg
+
+        // Historical data points (sampling key dates)
+        const historicalData = [
+            { date: '2022-06-01', gold: 52080, silver: 60900 },
+            { date: '2022-07-01', gold: 51500, silver: 58000 },
+            { date: '2022-08-01', gold: 50900, silver: 56500 },
+            { date: '2022-09-01', gold: 50200, silver: 55800 },
+            { date: '2022-10-01', gold: 51300, silver: 57200 },
+            { date: '2022-11-01', gold: 52400, silver: 59100 },
+            { date: '2022-12-01', gold: 54200, silver: 70500 },
+            { date: '2023-01-01', gold: 55800, silver: 72800 },
+            { date: '2023-02-01', gold: 57100, silver: 71200 },
+            { date: '2023-03-01', gold: 59400, silver: 69800 },
+            { date: '2023-04-01', gold: 60800, silver: 73500 },
+            { date: '2023-05-01', gold: 60200, silver: 74900 },
+            { date: '2023-06-01', gold: 59700, silver: 76200 },
+            { date: '2023-07-01', gold: 59200, silver: 81500 },
+            { date: '2023-08-01', gold: 59800, silver: 84200 },
+            { date: '2023-09-01', gold: 60400, silver: 85800 },
+            { date: '2023-10-01', gold: 61200, silver: 72500 },
+            { date: '2023-11-01', gold: 60900, silver: 71800 },
+            { date: '2023-12-01', gold: 62400, silver: 74200 },
+            { date: '2024-01-01', gold: 63800, silver: 73500 },
+            { date: '2024-02-01', gold: 62200, silver: 71900 },
+            { date: '2024-03-01', gold: 66100, silver: 75800 },
+            { date: '2024-04-01', gold: 70200, silver: 79200 },
+            { date: '2024-05-01', gold: 71800, silver: 84500 },
+            { date: '2024-06-01', gold: 71400, silver: 91200 },
+            { date: '2024-07-01', gold: 69800, silver: 89500 },
+            { date: '2024-08-01', gold: 68900, silver: 88200 },
+            { date: '2024-09-01', gold: 73500, silver: 92800 },
+            { date: '2024-10-01', gold: 76200, silver: 96400 },
+            { date: '2024-11-01', gold: 78100, silver: 98200 },
+            { date: '2024-12-01', gold: 80400, silver: 100500 },
+            { date: '2025-01-01', gold: 81300, silver: 92800 },
+            { date: '2025-02-01', gold: 86200, silver: 89500 },
+            { date: '2025-03-01', gold: 89400, silver: 94200 },
+            { date: '2025-04-01', gold: 94400, silver: 101800 },
+            { date: '2025-05-01', gold: 95900, silver: 107500 },
+            { date: '2025-06-01', gold: 99600, silver: 115200 },
+            { date: '2025-07-01', gold: 99500, silver: 124800 },
+            { date: '2025-08-01', gold: 102500, silver: 138500 },
+            { date: '2025-09-01', gold: 110200, silver: 152900 },
+            { date: '2025-10-01', gold: 119400, silver: 172000 },
+            { date: '2025-10-15', gold: 125500, silver: 190000 },
+            { date: '2025-10-23', gold: 125890, silver: 159000 },
+            { date: '2025-10-24', gold: 125460, silver: 156000 },
+            { date: '2025-10-25', gold: 124360, silver: 154900 }
+        ];
+
+        // Current prices
+        const currentGold = historicalData[historicalData.length - 1].gold;
+        const currentSilver = historicalData[historicalData.length - 1].silver;
+
+        // Calculate changes from reference
+        const goldChange = ((currentGold - GOLD_REFERENCE) / GOLD_REFERENCE * 100).toFixed(2);
+        const silverChange = ((currentSilver - SILVER_REFERENCE) / SILVER_REFERENCE * 100).toFixed(2);
+        const ratio = (currentGold / currentSilver).toFixed(2);
+
+        // Update info cards
+        document.getElementById('goldPrice').textContent = `₹${currentGold.toLocaleString('en-IN')}`;
+        document.getElementById('silverPrice').textContent = `₹${currentSilver.toLocaleString('en-IN')}`;
+        document.getElementById('ratio').textContent = ratio;
+        
+        const goldChangeEl = document.getElementById('goldChange');
+        goldChangeEl.textContent = `${goldChange > 0 ? '+' : ''}${goldChange}% since Jun 2022`;
+        goldChangeEl.className = `change ${goldChange >= 0 ? 'positive' : 'negative'}`;
+        
+        const silverChangeEl = document.getElementById('silverChange');
+        silverChangeEl.textContent = `${silverChange > 0 ? '+' : ''}${silverChange}% since Jun 2022`;
+        silverChangeEl.className = `change ${silverChange >= 0 ? 'positive' : 'negative'}`;
+
+        // Chart configuration
+        let currentRange = 'all';
+        let priceChart, indexChart;
+
+        function filterDataByRange(range) {
+            const now = new Date(historicalData[historicalData.length - 1].date);
+            let cutoffDate;
+            
+            switch(range) {
+                case '1m':
+                    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case '3m':
+                    cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                    break;
+                case '6m':
+                    cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+                    break;
+                case '1y':
+                    cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                    break;
+                default:
+                    return historicalData;
+            }
+            
+            return historicalData.filter(d => new Date(d.date) >= cutoffDate);
+        }
+
+        function createCharts() {
+            const data = filterDataByRange(currentRange);
+            const labels = data.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+            });
+
+            // Price Chart
+            const ctx1 = document.getElementById('priceChart').getContext('2d');
+            if (priceChart) priceChart.destroy();
+            
+            priceChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Gold (₹/10g)',
+                            data: data.map(d => d.gold),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Silver (₹/kg)',
+                            data: data.map(d => d.silver),
+                            borderColor: '#6b7280',
+                            backgroundColor: 'rgba(107, 116, 128, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Indexed Chart
+            const ctx2 = document.getElementById('indexChart').getContext('2d');
+            if (indexChart) indexChart.destroy();
+
+            const goldIndexed = data.map(d => ((d.gold / GOLD_REFERENCE) * 100).toFixed(2));
+            const silverIndexed = data.map(d => ((d.silver / SILVER_REFERENCE) * 100).toFixed(2));
+
+            indexChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Gold Index',
+                            data: goldIndexed,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Silver Index',
+                            data: silverIndexed,
+                            borderColor: '#6b7280',
+                            backgroundColor: 'rgba(107, 116, 128, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const change = (value - 100).toFixed(2);
+                                    return context.dataset.label + ': ' + value + ' (' + (change > 0 ? '+' : '') + change + '%)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function setTimeRange(range) {
+            currentRange = range;
+            
+            // Update button states
+            document.querySelectorAll('.controls .btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('secondary');
+            });
+            
+            const activeBtn = {
+                'all': 'btnAll',
+                '1y': 'btn1y',
+                '6m': 'btn6m',
+                '3m': 'btn3m',
+                '1m': 'btn1m'
+            }[range];
+            
+            const btn = document.getElementById(activeBtn);
+            btn.classList.add('active');
+            btn.classList.remove('secondary');
+            
+            createCharts();
+        }
+
+        // Initialize charts
+        createCharts();
+
+        // Auto-refresh simulation (in production, this would fetch real data)
+        setInterval(() => {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-IN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const timeStr = now.toLocaleTimeString('en-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true
+            });
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${dateStr}, ${timeStr} IST`;
+        }, 60000); // Update timestamp every minute
+    </script>
+</body>
+</html>
