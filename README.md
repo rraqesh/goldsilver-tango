@@ -13,7 +13,7 @@ Real-time tracking and comparison of Gold and Silver prices in Indian Rupees (IN
 
 ## 🚀 Demo
 
-View live demo: [GitHub Pages Link]
+View live demo: https://rraqesh.github.io/gold-silver-tracker-dashboard
 
 ## 📊 Data Coverage
 
